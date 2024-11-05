@@ -1,0 +1,368 @@
+package com.toedter.calendar;
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+public class RailwayBookingSystem extends JFrame implements ActionListener {
+    private Choice departureChoice, destinationChoice;
+    private JDateChooser dateChooser;
+    private JButton searchButton, addTrainButton, removeTrainButton;
+    private List<Train> trainList;
+    private Image backgroundImage;
+    private Image secondFrameBackgroundImage;
+
+    public RailwayBookingSystem() {
+        setTitle("Railway Booking System");
+        setSize(800, 600);
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setLayout(new GridBagLayout());
+
+        trainList = new ArrayList<>();
+        populateTrainData();
+
+        // Load background images
+        backgroundImage = Toolkit.getDefaultToolkit().getImage("main_frame_background.jpg");
+        secondFrameBackgroundImage = Toolkit.getDefaultToolkit().getImage("second_frame_background.jpg");
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(10, 10, 10, 10); // Padding for each component
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+
+        // Heading label
+        JLabel headingLabel = new JLabel("Railway Booking System");
+        headingLabel.setFont(new Font("Arial", Font.BOLD, 24));
+        headingLabel.setForeground(Color.BLUE);
+        gbc.gridwidth = 2; // Span across two columns
+        gbc.anchor = GridBagConstraints.CENTER;
+        add(headingLabel, gbc);
+
+        // Reset gridwidth for the rest of the components
+        gbc.gridwidth = 1;
+        gbc.gridy++; // Move to the next row
+
+        // Departure label and dropdown
+        add(createLabel("Departure"), gbc);
+        gbc.gridx = 1;
+        departureChoice = createChoice();
+        add(departureChoice, gbc);
+
+        // Destination label and dropdown
+        gbc.gridx = 0;
+        gbc.gridy++;
+        add(createLabel("Destination"), gbc);
+        gbc.gridx = 1;
+        destinationChoice = createChoice();
+        add(destinationChoice, gbc);
+
+        // Journey Date label and date chooser
+        gbc.gridx = 0;
+        gbc.gridy++;
+        add(createLabel("Journey Date"), gbc);
+        gbc.gridx = 1;
+        dateChooser = new JDateChooser();
+        add(dateChooser, gbc);
+
+        // Search button
+        gbc.gridx = 0;
+        gbc.gridy++;
+        gbc.gridwidth = 2; // Span across both columns for button alignment
+        searchButton = new JButton("Search Trains");
+        searchButton.addActionListener(this);
+        add(searchButton, gbc);
+
+        // Admin controls (Add Train and Remove Train buttons)
+        gbc.gridwidth = 1; // Reset to single column span
+        gbc.gridy++;
+        addTrainButton = new JButton("Add Train");
+        addTrainButton.addActionListener(this);
+        add(addTrainButton, gbc);
+
+        gbc.gridx = 1;
+        removeTrainButton = new JButton("Remove Train");
+        removeTrainButton.addActionListener(this);
+        add(removeTrainButton, gbc);
+    }
+
+    private JLabel createLabel(String text) {
+        JLabel label = new JLabel(text);
+        label.setFont(new Font("Arial", Font.BOLD, 14));
+        label.setForeground(Color.BLACK); // Adjust color for visibility on background
+        return label;
+        
+    }
+
+    private Choice createChoice() {
+        Choice choice = new Choice();
+        choice.add("Station A");
+        choice.add("Station B");
+        choice.add("Station C");
+        return choice;
+    }
+
+    private void populateTrainData() {
+        trainList.add(new Train("Train 1", "10:00 AM", "2:00 PM", "Station A", "Station B", 500, 1));
+        trainList.add(new Train("Train 2", "12:00 PM", "4:00 PM", "Station A", "Station C", 600, 2));
+        trainList.add(new Train("Train 3", "2:00 PM", "6:00 PM", "Station B", "Station C", 700, 3));
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        if (e.getSource() == searchButton) {
+            String departure = departureChoice.getSelectedItem();
+            String destination = destinationChoice.getSelectedItem();
+            Date date = dateChooser.getDate();
+            if (date == null) {
+                JOptionPane.showMessageDialog(this, "Please select a journey date.", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+            String formattedDate = dateFormat.format(date);
+
+            showAvailableTrains(departure, destination, formattedDate);
+        } else if (e.getSource() == addTrainButton) {
+            showAddTrainDialog();
+        } else if (e.getSource() == removeTrainButton) {
+            showRemoveTrainDialog();
+        }
+    }
+
+    private void showAddTrainDialog() {
+        JTextField trainNameField = new JTextField(10);
+        JTextField departureTimeField = new JTextField(10);
+        JTextField arrivalTimeField = new JTextField(10);
+        JTextField departureStationField = new JTextField(10);
+        JTextField destinationStationField = new JTextField(10);
+        JTextField fareField = new JTextField(10);
+        JTextField trainNumberField = new JTextField(10);
+
+        JPanel panel = new JPanel(new GridLayout(7, 2, 10, 10));
+        panel.add(new JLabel("Train Name:"));
+        panel.add(trainNameField);
+        panel.add(new JLabel("Departure Time:"));
+        panel.add(departureTimeField);
+        panel.add(new JLabel("Arrival Time:"));
+        panel.add(arrivalTimeField);
+        panel.add(new JLabel("Departure Station:"));
+        panel.add(departureStationField);
+        panel.add(new JLabel("Destination Station:"));
+        panel.add(destinationStationField);
+        panel.add(new JLabel("Fare:"));
+        panel.add(fareField);
+        panel.add(new JLabel("Train Number:"));
+        panel.add(trainNumberField);
+
+        int result = JOptionPane.showConfirmDialog(this, panel, "Add Train", JOptionPane.OK_CANCEL_OPTION);
+        if (result == JOptionPane.OK_OPTION) {
+            try {
+                String name = trainNameField.getText();
+                String departureTime = departureTimeField.getText();
+                String arrivalTime = arrivalTimeField.getText();
+                String departure = departureStationField.getText();
+                String destination = destinationStationField.getText();
+                int fare = Integer.parseInt(fareField.getText());
+                int trainNumber = Integer.parseInt(trainNumberField.getText());
+
+                trainList.add(new Train(name, departureTime, arrivalTime, departure, destination, fare, trainNumber));
+                JOptionPane.showMessageDialog(this, "Train added successfully.");
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(this, "Invalid input. Please enter numeric values for the fare and train number.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    private void showRemoveTrainDialog() {
+        String[] trainNames = trainList.stream().map(Train::getName).toArray(String[]::new);
+        JComboBox<String> trainComboBox = new JComboBox<>(trainNames);
+
+        JPanel panel = new JPanel(new GridLayout(1, 2, 10, 10));
+        panel.add(new JLabel("Select Train:"));
+        panel.add(trainComboBox);
+
+        int result = JOptionPane.showConfirmDialog(this, panel, "Remove Train", JOptionPane.OK_CANCEL_OPTION);
+        if (result == JOptionPane.OK_OPTION) {
+            int selectedIndex = trainComboBox.getSelectedIndex();
+            if (selectedIndex != -1) {
+                trainList.remove(selectedIndex);
+                JOptionPane.showMessageDialog(this, "Train removed successfully.");
+            } else {
+                JOptionPane.showMessageDialog(this, "Please select a train.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    private void showAvailableTrains(String departure, String destination, String date) {
+        JFrame secondFrame = new JFrame("Available Trains");
+        secondFrame.setSize(600, 400);
+        secondFrame.setLayout(new BorderLayout());
+
+        JPanel panel = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                g.drawImage(secondFrameBackgroundImage, 0, 0, getWidth(), getHeight(), this);
+            }
+        };
+        panel.setLayout(new BorderLayout());
+
+        String[] columns = {"Train Number", "Train Name", "Departure Time", "Arrival Time", "Fare"};
+        DefaultTableModel model = new DefaultTableModel(columns, 0);
+
+        for (Train train : trainList) {
+            if (train.getDeparture().equals(departure) && train.getDestination().equals(destination)) {
+                model.addRow(new Object[]{train.getTrainNumber(), train.getName(), train.getDepartureTime(), train.getArrivalTime(), train.getFare()});
+            }
+        }
+
+        JTable table = new JTable(model);
+        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        JScrollPane scrollPane = new JScrollPane(table);
+        panel.add(scrollPane, BorderLayout.CENTER);
+
+        JButton selectButton = new JButton("Select Train");
+        selectButton.addActionListener(e -> {
+            int selectedRow = table.getSelectedRow();
+            if (selectedRow >= 0) {
+                int trainNumber = (int) model.getValueAt(selectedRow, 0);
+                Train selectedTrain = trainList.stream().filter(t -> t.getTrainNumber() == trainNumber).findFirst().orElse(null);
+                if (selectedTrain != null) {
+                    showSeatSelectionFrame(selectedTrain);
+                }
+            } else {
+                JOptionPane.showMessageDialog(secondFrame, "Please select a train.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        });
+
+        panel.add(selectButton, BorderLayout.SOUTH);
+        secondFrame.add(panel);
+        secondFrame.setVisible(true);
+    }
+
+    private void showSeatSelectionFrame(Train selectedTrain) {
+        JFrame seatFrame = new JFrame("Seat Selection for " + selectedTrain.getName());
+        seatFrame.setSize(600, 400);
+        seatFrame.setLayout(new BorderLayout());
+
+        JPanel seatPanel = new JPanel(new GridLayout(5, 4)); // 20 seats in a grid layout
+        List<JButton> seatButtons = new ArrayList<>();
+
+        for (int i = 0; i < 20; i++) {
+            JButton seatButton = new JButton("Seat " + (i + 1));
+            seatButton.setBackground(Color.GREEN); // Available seats
+            seatButton.addActionListener(e -> {
+                seatButton.setEnabled(false); // Mark seat as booked
+                seatButton.setBackground(Color.RED); // Change color to indicate booking
+                showPaymentFrame(selectedTrain);
+            });
+            seatButtons.add(seatButton);
+            seatPanel.add(seatButton);
+        }
+
+        seatFrame.add(seatPanel, BorderLayout.CENTER);
+        seatFrame.setVisible(true);
+    }
+
+    private void showPaymentFrame(Train selectedTrain) {
+        JFrame paymentFrame = new JFrame("Payment");
+        paymentFrame.setSize(400, 300);
+        paymentFrame.setLayout(new GridLayout(5, 2));
+
+        int fare = selectedTrain.getFare();
+        double gst = 0.18; // 18% GST
+        double totalFare = fare + (fare * gst);
+
+        paymentFrame.add(new JLabel("Train Name:"));
+        paymentFrame.add(new JLabel(selectedTrain.getName()));
+        paymentFrame.add(new JLabel("Fare (INR):"));
+        paymentFrame.add(new JLabel(String.valueOf(fare)));
+        paymentFrame.add(new JLabel("GST (18%):"));
+        paymentFrame.add(new JLabel(String.format("%.2f", fare * gst)));
+        paymentFrame.add(new JLabel("Total Amount (INR):"));
+        paymentFrame.add(new JLabel(String.format("%.2f", totalFare)));
+
+        JTextField accountNumberField = new JTextField();
+        JTextField passwordField = new JPasswordField();
+
+        paymentFrame.add(new JLabel("Account Number:"));
+        paymentFrame.add(accountNumberField);
+        paymentFrame.add(new JLabel("Password:"));
+        paymentFrame.add(passwordField);
+
+        JButton payButton = new JButton("Pay Now");
+        payButton.addActionListener(e -> {
+            String accountNumber = accountNumberField.getText();
+            String password = passwordField.getText();
+
+            // Simple validation for demo purposes
+            if (accountNumber.isEmpty() || password.isEmpty()) {
+                JOptionPane.showMessageDialog(paymentFrame, "Please enter both account number and password.", "Error", JOptionPane.ERROR_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(paymentFrame, "Booking Successful! Your booking for " + selectedTrain.getName() + " is confirmed.", "Success", JOptionPane.INFORMATION_MESSAGE);
+                paymentFrame.dispose();
+            }
+        });
+        paymentFrame.add(payButton);
+        paymentFrame.setVisible(true);
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            RailwayBookingSystem frame = new RailwayBookingSystem();
+            frame.setVisible(true);
+        });
+    }
+}
+
+class Train {
+    private String name;
+    private String departureTime;
+    private String arrivalTime;
+    private String departure;
+    private String destination;
+    private int fare;
+    private int trainNumber;
+
+    public Train(String name, String departureTime, String arrivalTime, String departure, String destination, int fare, int trainNumber) {
+        this.name = name;
+        this.departureTime = departureTime;
+        this.arrivalTime = arrivalTime;
+        this.departure = departure;
+        this.destination = destination;
+        this.fare = fare;
+        this.trainNumber = trainNumber;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getDepartureTime() {
+        return departureTime;
+    }
+
+    public String getArrivalTime() {
+        return arrivalTime;
+    }
+
+    public String getDeparture() {
+        return departure;
+    }
+
+    public String getDestination() {
+        return destination;
+    }
+
+    public int getFare() {
+        return fare;
+    }
+
+    public int getTrainNumber() {
+        return trainNumber;
+    }
+}
